@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Concrete Beam Design (NSCP 2015)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .ui.header.center.aligned {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .ui.header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ui.header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 350px 1fr 400px;
+            gap: 25px;
+            height: calc(100vh - 200px);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            background: rgba(52, 152, 219, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .input-group h4 {
+            color: #2980b9;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .field {
+            margin-bottom: 15px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .field input:focus, .field select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(45deg, #2980b9, #3498db);
+        }
+
+        #visualization {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            position: relative;
+            height: 500px;
+            border: 2px solid #e0e6ed;
+            overflow: hidden;
+        }
+
+        .controls-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .beam-stats {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .cross-section-container {
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .cross-section-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .section-viewer {
+            text-align: center;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .section-canvas {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            background: white;
+        }
+
+        #calculationResults {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .result-group {
+            background: rgba(46, 204, 113, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .result-group h4 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .status-safe {
+            color: #27ae60 !important;
+        }
+
+        .status-warning {
+            color: #f39c12 !important;
+        }
+
+        .status-danger {
+            color: #e74c3c !important;
+        }
+
+        @media (max-width: 1200px) {
+            .layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .main-container {
+                padding: 10px;
+            }
+            
+            .section {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Loading animation */
+        .ui.placeholder .line {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Custom scrollbar */
+        .section::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .section::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .section::-webkit-scrollbar-thumb {
+            background: rgba(52, 152, 219, 0.5);
+            border-radius: 3px;
+        }
+
+        .section::-webkit-scrollbar-thumb:hover {
+            background: rgba(52, 152, 219, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="ui header center aligned">
+            <h1><i class="building icon"></i>Advanced Concrete Beam Design (NSCP 2015)</h1>
+            <p>Dynamic 3D visualization with real-time reinforcement modeling</p>
+        </div>
+
+        <div class="layout">
+            <!-- Left: Dynamic Input Parameters -->
+            <div class="section input-section" id="input-section">
+                <h3><i class="settings icon"></i>Design Parameters</h3>
+
+                <!-- Beam Geometry -->
+                <div class="input-group">
+                    <h4><i class="cube icon"></i>Beam Geometry</h4>
+                    <div class="field">
+                        <label>Beam Width (mm)</label>
+                        <input type="number" id="beamWidth" value="300" min="150" max="1000" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Beam Height (mm)</label>
+                        <input type="number" id="beamHeight" value="500" min="200" max="1500" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Beam Length (m)</label>
+                        <input type="number" id="beamLength" value="6" min="2" max="20" step="0.5" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Concrete Cover (mm)</label>
+                        <input type="number" id="concreteCover" value="40" min="20" max="75" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <!-- Material Properties -->
+                <div class="input-group">
+                    <h4><i class="industry icon"></i>Material Properties</h4>
+                    <div class="field">
+                        <label>Concrete Grade</label>
+                        <select id="concreteGrade" onchange="updateVisualization()">
+                            <option value="21">C21 (f'c = 21 MPa)</option>
+                            <option value="28" selected>C28 (f'c = 28 MPa)</option>
+                            <option value="35">C35 (f'c = 35 MPa)</option>
+                            <option value="42">C42 (f'c = 42 MPa)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Main Steel Grade (MPa)</label>
+                        <select id="mainSteelFy" onchange="updateVisualization()">
+                            <option value="276">Grade 276</option>
+                            <option value="414" selected>Grade 414</option>
+                            <option value="500">Grade 500</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Stirrup Steel Grade (MPa)</label>
+                        <select id="shearSteelFy" onchange="updateVisualization()">
+                            <option value="276" selected>Grade 276</option>
+                            <option value="414">Grade 414</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Applied Forces -->
+                <div class="input-group">
+                    <h4><i class="arrows alternate horizontal icon"></i>Applied Forces</h4>
+                    <div class="field">
+                        <label>Max Positive Moment (kN⋅m)</label>
+                        <input type="number" id="momentBottom" value="200" min="0" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Max Negative Moment (kN⋅m)</label>
+                        <input type="number" id="momentTop" value="150" min="0" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Max Shear Force (kN)</label>
+                        <input type="number" id="shear" value="120" min="0" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Axial Force (kN)</label>
+                        <input type="number" id="axial" value="0" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Torsion (kN⋅m)</label>
+                        <input type="number" id="torsion" value="0" min="0" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <!-- Reinforcement Details -->
+                <div class="input-group">
+                    <h4><i class="sitemap icon"></i>Reinforcement</h4>
+                    <div class="field">
+                        <label>Main Bar Diameter (mm)</label>
+                        <select id="mainBarDia" onchange="updateVisualization()">
+                            <option value="12">12mm</option>
+                            <option value="16" selected>16mm</option>
+                            <option value="20">20mm</option>
+                            <option value="25">25mm</option>
+                            <option value="32">32mm</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Stirrup Diameter (mm)</label>
+                        <select id="stirrupDia" onchange="updateVisualization()">
+                            <option value="8">8mm</option>
+                            <option value="10">10mm</option>
+                            <option value="12" selected>12mm</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Stirrup Spacing Minimum (mm)</label>
+                        <input type="number" id="stirrupSpacingMin" value="75" min="75" max="300" step="25" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Stirrup Spacing Maximum (mm)</label>
+                        <input type="number" id="stirrupSpacingMax" value="150" min="75" max="300" step="25" oninput="updateVisualization()">
+                    </div>
+                    <div class="field">
+                        <label>Maximum Aggregates Size (mm)</label>
+                        <input type="number" id="maxAggregateSize" value="25" min="10" max="40" step="5" oninput="updateVisualization()">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="performDetailedCalculation(); resetView();">
+                    <i class="calculator icon"></i> Calculate Design
+                </button>
+            </div>
+
+            <!-- Middle: Enhanced 3D Visualization -->
+            <div class="section">
+                <h3><i class="eye icon"></i>3D Model Viewer</h3>
+                <div id="visualization">
+                    <div class="controls-overlay">
+                        <button class="control-btn" onclick="resetView()" title="Reset View">
+                            <i class="home icon"></i>
+                        </button>
+                        <button class="control-btn" onclick="toggleWireframe(); resetView();" title="Toggle Wireframe">
+                            <i class="th icon"></i>
+                        </button>
+                        <button class="control-btn" onclick="toggleReinforcement(); resetView();" title="Show/Hide Reinforcement">
+                            <i class="sitemap icon"></i>
+                        </button>
+                        <button class="control-btn" onclick="downloadCalculationReport()" title="Export Model">
+                            <i class="download icon"></i>
+                        </button>
+                    </div>
+                    <div class="beam-stats" id="beamStats">
+                        Loading 3D model...
+                    </div>
+                </div>
+                
+                <!-- Cross-section views container -->
+                <div class="cross-section-container">
+                    <div class="cross-section-grid">
+                        <div class="section-viewer">
+                            <div class="section-title">Left Section</div>
+                            <canvas id="leftSection" class="section-canvas"></canvas>
+                        </div>
+                        <div class="section-viewer">
+                            <div class="section-title">Middle Section</div>
+                            <canvas id="middleSection" class="section-canvas"></canvas>
+                        </div>
+                        <div class="section-viewer">
+                            <div class="section-title">Right Section</div>
+                            <canvas id="rightSection" class="section-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Enhanced Results -->
+            <div class="section">
+                <h3><i class="chart bar icon"></i>Design Results</h3>
+                <div id="calculationResults">
+                    <div class="ui placeholder">
+                        <div class="paragraph">
+                            <div class="line"></div>
+                            <div class="line"></div>
+                            <div class="line"></div>
+                            <div class="line"></div>
+                            <div class="line"></div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 20px; text-align: center; color: #7f8c8d;">
+                        <i class="info circle icon"></i>Adjust parameters and click "Calculate Design" to see detailed results and 3D visualization.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+let scene, camera, renderer;
+let beamGroup, reinforcementGroup;
+let isWireframe = false;
+let showReinforcement = true;
+let bottomBarValidation = { isValid: true, recommendation: 'N/A', layout: null };
+let topBarValidation = { isValid: true, recommendation: 'N/A', layout: null };
+let shearCapacityStatus = 'PASS';
+let sectionBehavior = 'Tension-controlled';
+let actualPhi = 0.9;
+
+// Initialize scene on page load
+window.onload = () => {
+  init3D();
+  window.addEventListener('resize', onWindowResize);
+  updateVisualization();
+};
+
+// Window resize handler
+function onWindowResize() {
+  const container = document.getElementById('visualization');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+
+// Scene setup
+function init3D() {
+  const container = document.getElementById('visualization');
+  
+  if (!container) {
+    console.error('Visualization container not found');
+    return;
+  }
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f8ff);
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+  camera.position.set(10000, 10000, 10000);
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(1000, 1000, 1000);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  scene.add(dirLight);
+
+  setupControls();
+  animate();
+}
+
+// Basic scene controls: rotate and zoom
+function setupControls() {
+  let isDragging = false;
+  const prevPos = { x: 0, y: 0 };
+
+  renderer.domElement.addEventListener('mousedown', (e) => {
+    isDragging = true; 
+    prevPos.x = e.clientX; 
+    prevPos.y = e.clientY;
+  });
+  
+  renderer.domElement.addEventListener('mouseup', () => { 
+    isDragging = false; 
+  });
+  
+  renderer.domElement.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - prevPos.x;
+    const deltaY = e.clientY - prevPos.y;
+    const rotSpeed = 0.005;
+    const radius = camera.position.length();
+    const theta = Math.atan2(camera.position.z, camera.position.x);
+    const phi = Math.acos(camera.position.y / radius);
+
+    const newTheta = theta + deltaX * rotSpeed;
+    const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi + deltaY * rotSpeed));
+    
+    camera.position.x = radius * Math.sin(newPhi) * Math.cos(newTheta);
+    camera.position.y = radius * Math.cos(newPhi);
+    camera.position.z = radius * Math.sin(newPhi) * Math.sin(newTheta);
+    camera.lookAt(0, 0, 0);
+    
+    prevPos.x = e.clientX; 
+    prevPos.y = e.clientY;
+  });
+  
+  renderer.domElement.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 1.1 : 0.9;
+    camera.position.multiplyScalar(factor);
+    camera.lookAt(0, 0, 0);
+  });
+}
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+// Main visualization update
+function updateVisualization() {
+  // Clean up existing geometry
+  if (beamGroup) {
+    scene.remove(beamGroup);
+    beamGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+    beamGroup = null;
+  }
+  
+  if (reinforcementGroup) {
+    scene.remove(reinforcementGroup);
+    reinforcementGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+    reinforcementGroup = null;
+  }
+
+  // Get beam parameters with fallback values
+  const width = parseFloat(document.getElementById('beamWidth')?.value) || 300;
+  const height = parseFloat(document.getElementById('beamHeight')?.value) || 500;
+  const lengthMeters = parseFloat(document.getElementById('beamLength')?.value) || 6;
+  const length = lengthMeters * 1000; // convert to mm
+  const cover = parseFloat(document.getElementById('concreteCover')?.value) || 40;
+
+  createBeam(width, height, length, cover);
+
+  if (showReinforcement) {
+    createReinforcement(width, height, length, cover);
+  }
+
+    // Update stats display
+  updateBeamStats(width, height, length);
+
+  // Adjust camera to fit model
+  const maxDim = Math.max(width, height, length);
+  camera.position.set(maxDim * 1.5, maxDim * 1.2, maxDim * 1.5);
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+  resetView();
+}
+
+// Create main beam
+function createBeam(w, h, l, c) {
+  beamGroup = new THREE.Group();
+  const geometry = new THREE.BoxGeometry(l, h, w);
+  const material = isWireframe
+    ? new THREE.MeshBasicMaterial({ color: 0x666666, wireframe: true })
+    : new THREE.MeshLambertMaterial({ color: 0xcccccc, transparent: true, opacity: 0.8 });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  beamGroup.add(mesh);
+  scene.add(beamGroup);
+}
+
+// Create reinforcement with stirrups and bars
+function createReinforcement(w, h, l, c) {
+  reinforcementGroup = new THREE.Group();
+
+  const mainDia = parseFloat(document.getElementById('mainBarDia')?.value) || 16;
+  const stirrupDia = parseFloat(document.getElementById('stirrupDia')?.value) || 8;
+  const stirrupSpacing = parseFloat(document.getElementById('stirrupSpacing')?.value) || 150;
+
+  const effectiveW = w - 2 * c ;
+  const effectiveH = h - 2 * c ;
+
+  createLongitudinalBars(effectiveW, effectiveH, l, c, mainDia);
+  createStirrups(effectiveW, effectiveH, l, c, stirrupDia, stirrupSpacing);
+
+  scene.add(reinforcementGroup);
+}
+
+// Longitudinal bars
+function createLongitudinalBars(w, h, l, c, dia) {
+  const radius = dia / 2;
+  const geom = new THREE.CylinderGeometry(radius, radius, l, 16);
+  geom.rotateZ(Math.PI / 2);
+
+  const count = 3;
+  const material = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+  
+  for (let i = 0; i < count; i++) {
+    const xPos = -w/2 + c + (i / Math.max(1, count - 1)) * (w - 2*c);
+    const yBottom = -h/2 + c;
+    const yTop = h/2 - c;
+
+    const barBottom = new THREE.Mesh(geom.clone(), material.clone());
+    barBottom.position.set(0, yBottom, xPos);
+    reinforcementGroup.add(barBottom);
+
+    const barTop = new THREE.Mesh(geom.clone(), material.clone());
+    barTop.position.set(0, yTop, xPos);
+    reinforcementGroup.add(barTop);
+  }
+}
+
+// Stirrups with meeting hooks
+function createStirrups(w, h, l, c, dia, spacing) {
+  const radius = dia / 2;
+  const count = Math.floor(l / spacing);
+  
+  for (let i = 0; i <= count; i++) {
+    const x = -l/2 + i * spacing;
+    const group = new THREE.Group();
+    createBentRebarStirrupWithMeetingHooks(group, w, h, radius, c);
+    group.position.x = x;
+    reinforcementGroup.add(group);
+  }
+}
+
+// Create stirrup with meeting hooks
+function createBentRebarStirrupWithMeetingHooks(group, w, h, radius, c) {
+  const material = new THREE.MeshPhongMaterial({ color: 0xFF6347 });
+  const innerW = w - 2 * c + 6*radius;
+  const innerH = h - 2 * c + 6*radius;
+  const hookLen = 6 * (radius * 2);
+  
+  try {
+    const path = createSmoothStirrupPathWithMeetingHooks(innerW, innerH, hookLen);
+    const geo = new THREE.TubeGeometry(path, 200, radius, 8, false);
+    const mesh = new THREE.Mesh(geo, material);
+    group.add(mesh);
+  } catch (error) {
+    console.warn('Error creating stirrup geometry:', error);
+    // Fallback to simple rectangular stirrup
+    createSimpleStirrup(group, innerW, innerH, radius, material);
+  }
+}
+
+// Fallback simple stirrup creation
+function createSimpleStirrup(group, w, h, radius, material) {
+  const points = [
+    new THREE.Vector3(0, -h/2, -w/2),
+    new THREE.Vector3(0, -h/2, w/2),
+    new THREE.Vector3(0, h/2, w/2),
+    new THREE.Vector3(0, h/2, -w/2),
+    new THREE.Vector3(0, -h/2, -w/2)
+  ];
+  
+  const curve = new THREE.CatmullRomCurve3(points);
+  const geo = new THREE.TubeGeometry(curve, 64, radius, 8, false);
+  const mesh = new THREE.Mesh(geo, material);
+  group.add(mesh);
+}
+
+// Path with meeting hooks
+function createSmoothStirrupPathWithMeetingHooks(w, h, hookLen) {
+  const points = [];
+  const halfW = w/2;
+  const halfH = h/2;
+  const cornerX = -halfW;
+  const cornerY = -halfH;
+
+  const startHookX = cornerX - hookLen * Math.cos(Math.PI * 5/4);
+  const startHookY = cornerY - hookLen * Math.sin(Math.PI * 5/4);
+  const endHookX = cornerX + hookLen * Math.cos(Math.PI * 1/4);
+  const endHookY = cornerY + hookLen * Math.sin(Math.PI * 1/4);
+
+  // Construct path segments
+  points.push(new THREE.Vector3(0, startHookY, startHookX));
+  points.push(new THREE.Vector3(0, cornerY, cornerX));
+  points.push(new THREE.Vector3(0, cornerY, halfW));
+  points.push(new THREE.Vector3(0, halfH, halfW));
+  points.push(new THREE.Vector3(0, halfH, cornerX));
+  points.push(new THREE.Vector3(0, cornerY, cornerX));
+  points.push(new THREE.Vector3(0, endHookY, endHookX));
+
+  const curvePath = new THREE.CurvePath();
+  for (let i = 0; i < points.length - 1; i++) {
+    curvePath.add(new THREE.LineCurve3(points[i], points[i + 1]));
+  }
+  return curvePath;
+}
+
+// Function to update beam stats display
+function updateBeamStats(width, height, length) {
+  const volume = (width * height * length) / 1e9; // m^3
+  const weight = volume * 24; // kN, approximate density
+
+  document.getElementById('beamStats').innerHTML = `
+    <strong>Beam Statistics:</strong><br>
+    Width: ${width}mm<br>
+    Height: ${height}mm<br>
+    Length: ${(length/1000).toFixed(2)} m<br>
+    Volume: ${volume.toFixed(2)} m³<br>
+    Weight: ${weight.toFixed(1)} kN
+  `;
+}
+
+// Control functions
+function resetView() {
+  const w = parseFloat(document.getElementById('beamWidth')?.value) || 300;
+  const h = parseFloat(document.getElementById('beamHeight')?.value) || 500;
+  const l = parseFloat(document.getElementById('beamLength')?.value) || 6;
+  const maxDim = Math.max(w, h, l * 1000);
+  camera.position.set(maxDim * 0.8, maxDim * 0.6, maxDim * 0.8);
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+}
+
+function toggleWireframe() {
+  isWireframe = !isWireframe;
+  updateVisualization();
+}
+
+function toggleReinforcement() {
+  showReinforcement = !showReinforcement;
+  updateVisualization();
+}
+
+// Detailed calculation function
+function performDetailedCalculation() {
+  const resultsElement = document.getElementById('calculationResults');
+  if (!resultsElement) {
+    console.warn('Calculation results element not found');
+    return;
+  }
+
+  // Show loading state
+  resultsElement.innerHTML = `
+    <div style="text-align: center; padding: 20px;">
+      <i class="spinner loading icon" style="font-size: 2em;"></i>
+      <p>Performing NSCP 2015 calculations...</p>
+    </div>
+  `;
+
+  setTimeout(() => {
+    // Retrieve input values with enhanced validation
+    const width = Math.max(parseFloat(document.getElementById('beamWidth')?.value) || 300, 200);
+    const height = Math.max(parseFloat(document.getElementById('beamHeight')?.value) || 500, 300);
+    const fc = Math.max(parseFloat(document.getElementById('concreteGrade')?.value) || 28, 21);
+    const fy = Math.max(parseFloat(document.getElementById('mainSteelFy')?.value) || 414, 275);
+    const moment = Math.max(parseFloat(document.getElementById('momentBottom')?.value) || 250, 0);
+    const momentTop = Math.max(parseFloat(document.getElementById('momentTop')?.value) || 150, 0);
+    const shear = Math.max(parseFloat(document.getElementById('shear')?.value) || 120, 0);
+    const length = Math.max(parseFloat(document.getElementById('beamLength')?.value) || 6, 1);
+    const cover = Math.max(parseFloat(document.getElementById('concreteCover')?.value) || 40, 25);
+    const barDia = Math.max(parseFloat(document.getElementById('mainBarDia')?.value) || 16, 12);
+    const stirrupDia = Math.max(parseFloat(document.getElementById('stirrupDia')?.value) || 12, 10);
+    const stirrupSpacingMin = Math.max(parseFloat(document.getElementById('stirrupSpacingMin')?.value) || 75, 50);
+    const stirrupSpacingMax = Math.max(parseFloat(document.getElementById('stirrupSpacingMax')?.value) || 150, 100);
+    const maxAggregateSize = Math.max(parseFloat(document.getElementById('maxAggregateSize')?.value) || 25, 10);
+
+    // Constants based on NSCP 2015
+    const Es = 200000; // MPa (modulus of elasticity of steel)
+    const phi = 0.9; // strength reduction factor for flexure
+    const phiShear = 0.75; // strength reduction factor for shear
+    const epsilonCu = 0.003; // ultimate concrete strain
+    
+    // Step 1: Calculate design moments
+    const Mu = moment * 1000000; // Convert kN⋅m to N⋅mm
+    const MuTop = momentTop * 1000000;
+
+    // Enhanced effective depth calculation considering bar arrangement
+    let d, dt, dPrime;
+    
+    // For single layer arrangement
+    d = height - cover - stirrupDia - barDia/2;
+    dt = d; // distance to tension steel centroid
+    dPrime = cover + stirrupDia + barDia/2; // depth to compression steel centroid
+    
+    const b = width;
+
+    // Step 2: Enhanced Beta (β) calculation per NSCP 2015
+    let beta;
+    if (fc <= 28) {
+      beta = 0.85;
+    } else if (fc <= 55) {
+      beta = Math.max(0.85 - 0.05 * (fc - 28) / 7, 0.65);
+    } else {
+      beta = 0.65;
+    }
+
+    // Step 3: Enhanced steel ratio calculations per NSCP 2015
+    const rhoMin1 = (0.25 * Math.sqrt(fc)) / fy;
+    const rhoMin2 = 1.4 / fy;
+    const rhoMin = Math.max(rhoMin1, rhoMin2);
+
+    // Balanced steel ratio calculation
+    const rhoBal = (0.85 * beta * fc / fy) * (600 / (600 + fy));
+    
+    // Maximum steel ratios
+    const rhoMax1 = 0.75 * rhoBal; // 75% of balanced for tension-controlled
+    const rhoMax2 = 0.025; // Additional maximum limit of 2.5% per NSCP
+    const rhoMaxCompression = 0.04; // 4% for compression members
+    const rhoMax = Math.min(rhoMax1, rhoMax2);
+
+    // Enhanced bar spacing validation function
+    function validateBarSpacing(beamWidth, concreteCover, stirrupDiameter, mainBarDiameter, numberOfBars, aggregateSize) {
+      // Minimum spacing requirements per NSCP 2015
+      const minSpacing1 = 25; // 25mm minimum
+      const minSpacing2 = mainBarDiameter; // bar diameter
+      const minSpacing3 = (4/3) * aggregateSize; // 4/3 × aggregate size
+      const minSpacingRequired = Math.max(minSpacing1, minSpacing2, minSpacing3);
+      
+      // Available width for bars
+      const clearWidth = beamWidth - 2 * concreteCover - 2 * stirrupDiameter;
+      
+      if (clearWidth <= 0) {
+        return {
+          isValid: false,
+          error: 'Insufficient beam width for minimum cover requirements',
+          recommendation: 'INCREASE_BEAM_WIDTH',
+          details: {
+            clearWidth: clearWidth,
+            minSpacingRequired: minSpacingRequired,
+            layout: null
+          }
+        };
+      }
+
+      // Try single layer arrangement
+      const singleLayerLayout = calculateOptimalLayout(clearWidth, mainBarDiameter, numberOfBars, minSpacingRequired, 1);
+      
+      if (singleLayerLayout.feasible) {
+        return {
+          isValid: true,
+          layout: singleLayerLayout,
+          recommendation: 'SINGLE_LAYER_OK',
+          details: {
+            clearWidth: clearWidth,
+            minSpacingRequired: minSpacingRequired,
+            actualSpacing: singleLayerLayout.spacing
+          }
+        };
+      }
+
+      // Try two layer arrangement
+      const twoLayerLayout = calculateOptimalLayout(clearWidth, mainBarDiameter, numberOfBars, minSpacingRequired, 2);
+      
+      if (twoLayerLayout.feasible) {
+        // Adjust effective depth for two layers
+        const layerSpacing = Math.max(25, mainBarDiameter); // minimum 25mm between layers
+        const adjustedD = d - layerSpacing/2; // average depth reduction
+        
+        return {
+          isValid: true,
+          layout: twoLayerLayout,
+          recommendation: 'TWO_LAYERS_REQUIRED',
+          effectiveDepthAdjustment: layerSpacing/2,
+          details: {
+            clearWidth: clearWidth,
+            minSpacingRequired: minSpacingRequired,
+            actualSpacing: twoLayerLayout.spacing,
+            layerSpacing: layerSpacing
+          }
+        };
+      }
+
+      // Calculate maximum possible bars
+      const maxPossibleBars = calculateMaximumBars(clearWidth, mainBarDiameter, minSpacingRequired, 2);
+      
+      return {
+        isValid: false,
+        error: `Cannot accommodate ${numberOfBars} bars with required spacing`,
+        recommendation: 'INCREASE_SECTION_OR_REDUCE_BARS',
+        details: {
+          clearWidth: clearWidth,
+          minSpacingRequired: minSpacingRequired,
+          maxPossibleBars: maxPossibleBars,
+          layout: null
+        }
+      };
+    }
+
+    function calculateOptimalLayout(availableWidth, barDiameter, totalBars, minSpacing, maxLayers) {
+      for (let layers = 1; layers <= maxLayers; layers++) {
+        const barsPerLayer = Math.ceil(totalBars / layers);
+        
+        if (barsPerLayer === 1) {
+          if (barDiameter <= availableWidth) {
+            return {
+              feasible: true,
+              layers: layers,
+              barsPerLayer: barsPerLayer,
+              spacing: availableWidth,
+              totalBarsAccommodated: layers * barsPerLayer
+            };
+          }
+          continue;
+        }
+
+        const totalBarWidth = barsPerLayer * barDiameter;
+        if (totalBarWidth > availableWidth) continue;
+
+        const spacingGaps = barsPerLayer - 1;
+        const availableSpacingWidth = availableWidth - totalBarWidth;
+        const actualSpacing = spacingGaps > 0 ? availableSpacingWidth / spacingGaps : 0;
+
+        if (actualSpacing >= minSpacing) {
+          return {
+            feasible: true,
+            layers: layers,
+            barsPerLayer: barsPerLayer,
+            spacing: actualSpacing,
+            totalBarsAccommodated: layers * barsPerLayer
+          };
+        }
+      }
+
+      return { feasible: false };
+    }
+
+    function calculateMaximumBars(availableWidth, barDiameter, minSpacing, maxLayers) {
+      let maxBars = 0;
+      
+      for (let layers = 1; layers <= maxLayers; layers++) {
+        // Calculate max bars per layer: (width + spacing) / (bar + spacing)
+        const maxBarsPerLayer = Math.floor((availableWidth + minSpacing) / (barDiameter + minSpacing));
+        const totalBars = maxBarsPerLayer * layers;
+        maxBars = Math.max(maxBars, totalBars);
+      }
+      
+      return maxBars;
+    }
+
+    // Step 4: Enhanced flexural design calculations
+    const Rn = Mu / (phi * b * d * d);
+    const m = fy / (0.85 * fc);
+    const discriminant = 1 - (2 * m * Rn) / fy;
+    
+    let rho, beamType, AsBottom, AsTop = 0, AsCompression = 0;
+    let compressionSteelRequired = false;
+    let tensionControlled = true;
+    
+    // Check if section can resist moment with singly reinforced design
+    if (discriminant >= 0 && Rn <= (rhoMax * fy * (1 - rhoMax * fy / (1.7 * fc)))) {
+      // Singly reinforced design
+      beamType = "Singly Reinforced Beam";
+      rho = (1 / m) * (1 - Math.sqrt(discriminant));
+      rho = Math.max(rho, rhoMin); // Ensure minimum steel
+      AsBottom = rho * b * d;
+    } else {
+      // Doubly reinforced design required
+      beamType = "Doubly Reinforced Beam";
+      compressionSteelRequired = true;
+      
+      // Use maximum tension steel ratio
+      const rhoTension = rhoMax;
+      const As1 = rhoTension * b * d;
+      
+      // Moment capacity from maximum tension steel
+      const a1 = (As1 * fy) / (0.85 * fc * b);
+      const Mn1 = As1 * fy * (d - a1/2);
+      
+      // Additional moment to be resisted
+      const Mn2 = Mu/phi - Mn1;
+      
+      if (Mn2 > 0) {
+        // Additional tension steel required
+        const leverArm = d - dPrime;
+        const As2 = Mn2 / (fy * leverArm);
+        AsBottom = As1 + As2;
+        
+        // Check if compression steel yields
+        const c = a1 / beta;
+        const epsilonS_prime = (epsilonCu / c) * (c - dPrime);
+        const epsilonY = fy / Es;
+        
+        let fsPrime;
+        if (epsilonS_prime >= epsilonY) {
+          fsPrime = fy; // Compression steel yields
+        } else {
+          fsPrime = epsilonS_prime * Es; // Compression steel doesn't yield
+          tensionControlled = false;
+        }
+        
+        // Calculate required compression steel area
+        AsCompression = (As2 * fy) / fsPrime;
+      } else {
+        AsBottom = As1;
+      }
+    }
+
+    // Enhanced top reinforcement calculation
+    if (MuTop > 0) {
+      const RnTop = MuTop / (phi * b * d * d);
+      const discriminantTop = 1 - (2 * m * RnTop) / fy;
+      
+      if (discriminantTop >= 0) {
+        const rhoTop = Math.max((1 / m) * (1 - Math.sqrt(discriminantTop)), rhoMin);
+        AsTop = Math.max(AsTop, rhoTop * b * d);
+      } else {
+        // Top moment requires doubly reinforced design too
+        AsTop = Math.max(AsTop, rhoMax * b * d);
+      }
+    }
+
+    // NSCP 2015 minimum top reinforcement requirements
+    const AsTopMin1 = AsBottom / 3; // 1/3 of bottom steel
+    const AsTopMin2 = rhoMin * b * d; // Minimum steel ratio
+    const AsTopMin3 = (2 * barDia * barDia * Math.PI / 4); // Minimum 2 bars
+    AsTop = Math.max(AsTop, AsTopMin1, AsTopMin2, AsTopMin3);
+
+    // Step 5: Enhanced strain and compatibility analysis
+    const a = (AsBottom * fy) / (0.85 * fc * b);
+    const c = a / beta;
+    const es = (epsilonCu / c) * (d - c);
+    const et = (epsilonCu / c) * (dt - c); // strain at extreme tension fiber
+    const ey = fy / Es;
+    const steelYields = es >= ey;
+
+    // Determine section behavior and phi factor
+    let actualPhi, sectionBehavior;
+    if (et >= 0.005) {
+      actualPhi = 0.9;
+      sectionBehavior = "Tension-Controlled";
+    } else if (et >= ey) {
+      // Transition zone
+      actualPhi = 0.65 + (et - ey) * (0.25 / (0.005 - ey));
+      sectionBehavior = "Transition Zone";
+    } else {
+      actualPhi = 0.65;
+      sectionBehavior = "Compression-Controlled";
+    }
+
+    // Calculate required number of bars
+    const barArea = Math.PI * Math.pow(barDia / 2, 2);
+    const numBarsBottom = Math.ceil(AsBottom / barArea);
+    const numBarsTop = Math.ceil(AsTop / barArea);
+    const numBarsCompression = AsCompression > 0 ? Math.ceil(AsCompression / barArea) : 0;
+
+    // Enhanced bar spacing validation
+    const bottomBarValidation = validateBarSpacing(b, cover, stirrupDia, barDia, numBarsBottom, maxAggregateSize);
+    const topBarValidation = validateBarSpacing(b, cover, stirrupDia, barDia, numBarsTop, maxAggregateSize);
+    const compressionBarValidation = numBarsCompression > 0 ? 
+      validateBarSpacing(b, cover, stirrupDia, barDia, numBarsCompression, maxAggregateSize) : 
+      { isValid: true, recommendation: 'NOT_REQUIRED' };
+
+    // Adjust effective depth if two layers are used
+    let adjustedD = d;
+    if (bottomBarValidation.isValid && bottomBarValidation.layout && bottomBarValidation.layout.layers > 1) {
+      adjustedD = d - (bottomBarValidation.effectiveDepthAdjustment || 0);
+    }
+
+    // Recalculate with adjusted depth if necessary
+    if (adjustedD !== d) {
+      // Note: In practice, you might want to recalculate the entire design with adjusted depth
+      // For brevity, we'll just note the adjustment
+    }
+
+    // Calculate provided steel areas
+    const AsBottomProvided = numBarsBottom * barArea;
+    const AsTopProvided = numBarsTop * barArea;
+    const AsCompressionProvided = numBarsCompression * barArea;
+
+    // Enhanced Shear Design per NSCP 2015
+    const bw = width; // web width
+    const fyv = parseFloat(document.getElementById('shearSteelFy')?.value) || 276;
+    
+    // Step 1: Calculate concrete shear strength (NSCP 2015 Section 422.5.5.1)
+    let Vc_N;
+    const axialLoad = 0; // Assuming no axial load for beams
+    
+    if (axialLoad === 0) {
+      // For members subject to shear and flexure only
+      Vc_N = 0.17 * Math.sqrt(fc) * bw * adjustedD; // in Newtons
+    } else {
+      // For members with axial compression (future enhancement)
+      Vc_N = 0.17 * Math.sqrt(fc) * bw * adjustedD;
+    }
+    
+    const Vc = Vc_N / 1000; // Convert to kN
+    
+    // Step 2: Shear design requirements
+    const Vu = shear; // Applied factored shear force
+    const phiVc = phiShear * Vc;
+    const Vs_required = Math.max(0, Vu - phiVc);
+    
+    // Step 3: Determine shear reinforcement requirements
+    let shearReinforcementRequired = false;
+    let minShearReinforcement = false;
+    
+    // Check if shear reinforcement is required
+    if (Vu > 0.5 * phiVc) {
+      shearReinforcementRequired = true;
+    }
+    
+    // Minimum shear reinforcement when Vu > 0.5φVc
+    if (Vu > 0.5 * phiVc) {
+      minShearReinforcement = true;
+    }
+
+    // Step 4: Enhanced stirrup design
+    const stirrupArea = 2 * Math.PI * Math.pow(stirrupDia / 2, 2); // Two-legged stirrups
+    
+    let requiredStirrupSpacing, designStirrupSpacing, stirrupSpacingCheck;
+    let spacingLimitReason = "";
+    
+    if (shearReinforcementRequired && Vs_required > 0) {
+      // Calculate required spacing for shear
+      requiredStirrupSpacing = (stirrupArea * fyv * adjustedD) / (Vs_required * 1000);
+      
+      // Maximum spacing limits per NSCP 2015
+      const maxSpacing1 = adjustedD / 2; // d/2
+      const maxSpacing2 = 600; // 600 mm maximum
+      let maxSpacingLimit = Math.min(maxSpacing1, maxSpacing2);
+      
+      // Check for high shear condition
+      const VsLimit = 0.33 * Math.sqrt(fc) * bw * adjustedD / 1000; // in kN
+      if (Vs_required > VsLimit) {
+        maxSpacingLimit = Math.min(adjustedD / 4, 300);
+        spacingLimitReason = "High shear: Vs > 0.33√fc·bw·d";
+        stirrupSpacingCheck = "High shear condition - max spacing = min(d/4, 300mm)";
+      } else {
+        spacingLimitReason = "Normal shear condition";
+        stirrupSpacingCheck = "Normal shear condition - max spacing = min(d/2, 600mm)";
+      }
+      
+      designStirrupSpacing = Math.min(requiredStirrupSpacing, maxSpacingLimit, stirrupSpacingMax);
+      
+    } else if (minShearReinforcement) {
+      // Minimum shear reinforcement calculation
+      const AvMin1 = (0.062 * Math.sqrt(fc) * bw) / fyv;
+      const AvMin2 = (0.35 * bw) / fyv;
+      const AvMin = Math.max(AvMin1, AvMin2);
+      
+      const sMaxForMinReinf = stirrupArea / AvMin;
+      const maxSpacingLimit = Math.min(adjustedD / 2, 600);
+      
+      designStirrupSpacing = Math.min(sMaxForMinReinf, maxSpacingLimit, stirrupSpacingMax);
+      requiredStirrupSpacing = sMaxForMinReinf;
+      stirrupSpacingCheck = "Minimum shear reinforcement governs";
+      spacingLimitReason = "Minimum reinforcement requirement";
+      
+    } else {
+      // No shear reinforcement required by calculation
+      designStirrupSpacing = stirrupSpacingMax;
+      requiredStirrupSpacing = stirrupSpacingMax;
+      stirrupSpacingCheck = "No shear reinforcement required by calculation";
+      spacingLimitReason = "Constructibility requirement only";
+    }
+
+    // Step 5: Check maximum shear capacity
+    const VsMax = 0.66 * Math.sqrt(fc) * bw * adjustedD / 1000; // Maximum Vs in kN
+    const VnMax = Vc + VsMax; // Maximum nominal shear strength
+    const phiVnMax = phiShear * VnMax; // Maximum design shear strength
+    
+    let shearCapacityCheck, shearCapacityStatus;
+    if (Vu <= phiVnMax) {
+      shearCapacityCheck = "ADEQUATE - Section can resist applied shear";
+      shearCapacityStatus = "PASS";
+    } else {
+      shearCapacityCheck = "INADEQUATE - Increase section size";
+      shearCapacityStatus = "FAIL";
+    }
+
+    // Enhanced code compliance checking
+    const codeCompliance = {
+      minSteelRatio: {
+        check: typeof rho !== 'undefined' && rho >= rhoMin,
+        value: (rho * 100).toFixed(4),
+        limit: (rhoMin * 100).toFixed(4),
+        status: (typeof rho !== 'undefined' && rho >= rhoMin) ? 'PASS' : 'FAIL'
+      },
+      maxSteelRatio: {
+        check: typeof rho !== 'undefined' && rho <= rhoMax,
+        value: (rho * 100).toFixed(4),
+        limit: (rhoMax * 100).toFixed(4),
+        status: (typeof rho !== 'undefined' && rho <= rhoMax) ? 'PASS' : 'FAIL'
+      },
+      bottomBarSpacing: {
+        check: bottomBarValidation?.isValid ?? false,
+        status: bottomBarValidation?.isValid ? 'PASS' : 'FAIL',
+        recommendation: bottomBarValidation?.recommendation ?? 'N/A'
+      },
+      topBarSpacing: {
+        check: topBarValidation?.isValid ?? false,
+        status: topBarValidation?.isValid ? 'PASS' : 'FAIL',
+        recommendation: topBarValidation?.recommendation ?? 'N/A'
+      },
+      shearCapacity: {
+        check: typeof shearCapacityStatus !== 'undefined' && shearCapacityStatus === 'PASS',
+        status: shearCapacityStatus ?? 'FAIL',
+        message: shearCapacityCheck
+      },
+      sectionBehavior: {
+        phi: actualPhi,
+        behavior: sectionBehavior,
+        status: (typeof actualPhi !== 'undefined' && actualPhi >= 0.9) ? 'OPTIMAL' :
+                (typeof actualPhi !== 'undefined' && actualPhi >= 0.65) ? 'ACCEPTABLE' : 'REVIEW_REQUIRED'
+      }
+    };
+
+    // Store comprehensive calculation data for reporting
+    window.calculationData = {
+      inputs: { 
+        width, height, fc, fy, moment, momentTop, shear, length, cover, 
+        barDia, stirrupDia, maxAggregateSize, fyv 
+      },
+      calculations: {
+        // Geometry
+        d: adjustedD, dt, dPrime, b, beta,
+        
+        // Steel ratios
+        rhoMin, rhoMin1, rhoMin2, rhoBal, rhoMax, rhoMax1, rhoMax2, rho,
+        
+        // Design results
+        beamType, Rn, m, discriminant, AsBottom, AsTop, AsCompression,
+        numBarsBottom, numBarsTop, numBarsCompression,
+        AsBottomProvided, AsTopProvided, AsCompressionProvided,
+        
+        // Strain analysis
+        a, c, es, et, ey, steelYields, actualPhi, sectionBehavior,
+        
+        // Shear design
+        Vc, Vs_required, phiVc, VsMax, VnMax, phiVnMax,
+        shearReinforcementRequired, minShearReinforcement,
+        requiredStirrupSpacing, designStirrupSpacing, stirrupSpacingCheck,
+        stirrupArea, spacingLimitReason,
+        
+        // Validations
+        bottomBarValidation, topBarValidation, compressionBarValidation,
+        shearCapacityCheck, shearCapacityStatus,
+        
+        // Code compliance
+        codeCompliance,
+        
+        // Additional properties
+        compressionSteelRequired, tensionControlled
+      }
+    };
+
+    const topBarSpacing = window.calculationData.calculations.topBarSpacing;
+
+    // Generate results HTML
+    resultsElement.innerHTML = `
+      <div class="result-group">
+        <h4><i class="check circle icon"></i>NSCP 2015 Flexural Design Results</h4>
+        
+        <div class="ui segment">
+          <h5>Beam Classification</h5>
+          <div class="result-item">
+            <span class="result-label">Design Type:</span>
+            <span class="result-value">${beamType}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Effective Depth (d):</span>
+            <span class="result-value">${adjustedD.toFixed(1)} mm</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Beta (β):</span>
+            <span class="result-value">${beta.toFixed(3)}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Section Behavior:</span>
+            <span class="result-value ${actualPhi >= 0.9 ? 'text-success' : actualPhi >= 0.65 ? 'text-warning' : 'text-danger'}">${sectionBehavior}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Strength Reduction Factor (φ):</span>
+            <span class="result-value">${actualPhi.toFixed(3)}</span>
+          </div>
+        </div>
+
+        <div class="ui segment">
+          <h5>Steel Ratios Analysis</h5>
+          <div class="result-item">
+            <span class="result-label">ρ minimum:</span>
+            <span class="result-value">${(rhoMin * 100).toFixed(4)}%</span>
+            <small>(= max(0.25√f'c/fy, 1.4/fy))</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">ρ balanced:</span>
+            <span class="result-value">${(rhoBal * 100).toFixed(4)}%</span>
+            <small>(= 0.85β(f'c/fy)(600/(600+fy)))</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">ρ max (0.75ρbal):</span>
+            <span class="result-value">${(rhoMax1 * 100).toFixed(4)}%</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">ρ max (2.5% limit):</span>
+            <span class="result-value">${(rhoMax2 * 100).toFixed(4)}%</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">ρ max (governing):</span>
+            <span class="result-value">${(rhoMax * 100).toFixed(4)}%</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">ρ required:</span>
+            <span class="result-value ${rho >= rhoMin && rho <= rhoMax ? 'text-success' : 'text-danger'}">${(rho * 100).toFixed(4)}%</span>
+          </div>
+        </div>
+
+        <div class="ui segment">
+          <h5>Required Steel Areas</h5>
+          <div class="result-item">
+            <span class="result-label">Bottom Steel (As):</span>
+            <span class="result-value">${AsBottom.toFixed(0)} mm²</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Top Steel (As'):</span>
+            <span class="result-value">${AsTop.toFixed(0)} mm²</span>
+            <small>(Min = max(As/3, ρmin×b×d, 2 bars))</small>
+          </div>
+          ${AsCompression > 0 ? `
+          <div class="result-item">
+            <span class="result-label">Compression Steel:</span>
+            <span class="result-value">${AsCompression.toFixed(0)} mm²</span>
+            <small>(Required for doubly reinforced design)</small>
+          </div>
+          ` : ''}
+        </div>
+
+        <div class="ui segment">
+          <h5>Bar Details & Layout Analysis</h5>
+          
+          <!-- Bottom Bars -->
+          <div class="ui ${bottomBarValidation.isValid ? 'green' : 'red'} message">
+            <h6><i class="arrow down icon"></i>Bottom Bars (${barDia}mm φ)</h6>
+            <div class="result-item">
+              <span class="result-label">Required:</span>
+              <span class="result-value">${numBarsBottom} bars (${AsBottomProvided.toFixed(0)} mm²)</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Layout Status:</span>
+              <span class="result-value">${bottomBarValidation.isValid ? '✓ FEASIBLE' : '✗ LAYOUT ISSUE'}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Recommendation:</span>
+              <span class="result-value">${bottomBarValidation.recommendation}</span>
+            </div>
+            ${bottomBarValidation.isValid && bottomBarValidation.layout ? `
+            <div class="result-item">
+              <span class="result-label">Layout Configuration:</span>
+              <span class="result-value">${bottomBarValidation.layout.layers} layer(s), ${bottomBarValidation.layout.barsPerLayer} bars/layer</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Clear Spacing:</span>
+              <span class="result-value">${bottomBarValidation.layout.spacing.toFixed(1)} mm</span>
+            </div>
+            ` : ''}
+            ${!bottomBarValidation.isValid && bottomBarValidation.details && bottomBarValidation.details.maxPossibleBars ? `
+            <div class="result-item">
+              <span class="result-label">Max Bars Possible:</span>
+              <span class="result-value">${bottomBarValidation.details.maxPossibleBars} bars (with current section)</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Min. Required Spacing:</span>
+              <span class="result-value">${bottomBarValidation.details.minSpacingRequired.toFixed(1)} mm</span>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Top Bars -->
+          <div class="ui ${topBarValidation.isValid ? 'green' : 'red'} message">
+            <h6><i class="arrow up icon"></i>Top Bars (${barDia}mm φ)</h6>
+            <div class="result-item">
+              <span class="result-label">Required:</span>
+              <span class="result-value">${numBarsTop} bars (${AsTopProvided.toFixed(0)} mm²)</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Layout Status:</span>
+              <span class="result-value">${topBarValidation.isValid ? '✓ FEASIBLE' : '✗ LAYOUT ISSUE'}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Recommendation:</span>
+              <span class="result-value">${topBarValidation.recommendation}</span>
+            </div>
+            ${topBarValidation.isValid && topBarValidation.layout ? `
+            <div class="result-item">
+              <span class="result-label">Layout Configuration:</span>
+              <span class="result-value">${topBarValidation.layout.layers} layer(s), ${topBarValidation.layout.barsPerLayer} bars/layer</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Clear Spacing:</span>
+              <span class="result-value">${topBarValidation.layout.spacing.toFixed(1)} mm</span>
+            </div>
+            ` : ''}
+          </div>
+
+          ${numBarsCompression > 0 ? `
+          <!-- Compression Bars -->
+          <div class="ui ${compressionBarValidation.isValid ? 'green' : 'red'} message">
+            <h6><i class="compress icon"></i>Compression Bars (${barDia}mm φ)</h6>
+            <div class="result-item">
+              <span class="result-label">Required:</span>
+              <span class="result-value">${numBarsCompression} bars (${AsCompressionProvided.toFixed(0)} mm²)</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Layout Status:</span>
+              <span class="result-value">${compressionBarValidation.isValid ? '✓ FEASIBLE' : '✗ LAYOUT ISSUE'}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Recommendation:</span>
+              <span class="result-value">${compressionBarValidation.recommendation}</span>
+            </div>
+          </div>
+          ` : ''}
+          
+          <div class="ui info message">
+            <h6>Spacing Requirements Summary</h6>
+            <div class="result-item">
+              <span class="result-label">Min Clear Spacing:</span>
+              <span class="result-value">max(25mm, db, 4/3×agg) = ${Math.max(25, barDia, (4/3)*maxAggregateSize).toFixed(1)} mm</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Available Width for Bars:</span>
+              <span class="result-value">${(width - 2*cover - 2*stirrupDia).toFixed(1)} mm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ui segment">
+          <h5>Strain & Compatibility Analysis</h5>
+          <div class="result-item">
+            <span class="result-label">Neutral Axis Depth (c):</span>
+            <span class="result-value">${c.toFixed(1)} mm</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Compression Block Depth (a):</span>
+            <span class="result-value">${a.toFixed(1)} mm</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Steel Strain (εs):</span>
+            <span class="result-value">${(es * 1000).toFixed(3)} × 10⁻³</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Extreme Tension Strain (εt):</span>
+            <span class="result-value">${(et * 1000).toFixed(3)} × 10⁻³</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Yield Strain (εy):</span>
+            <span class="result-value">${(ey * 1000).toFixed(3)} × 10⁻³</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Steel Yields:</span>
+            <span class="result-value ${steelYields ? 'text-success' : 'text-warning'}">${steelYields ? 'Yes' : 'No'}</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">c/dt Ratio:</span>
+            <span class="result-value">${(c/dt).toFixed(3)}</span>
+            <small>${c/dt <= 0.375 ? '(Tension-controlled)' : c/dt <= 0.6 ? '(Transition zone)' : '(Compression-controlled)'}</small>
+          </div>
+        </div>
+
+        <div class="ui segment">
+          <h5>Shear Design Analysis (NSCP 2015)</h5>
+          
+          <!-- Shear Capacity Check -->
+          <div class="ui ${shearCapacityStatus === 'PASS' ? 'green' : 'red'} message">
+            <div class="result-item">
+              <span class="result-label">Overall Shear Check:</span>
+              <span class="result-value">${shearCapacityCheck}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Status:</span>
+              <span class="result-value">${shearCapacityStatus}</span>
+            </div>
+          </div>
+          
+          <!-- Shear Strengths -->
+          <div class="result-item">
+            <span class="result-label">Concrete Shear Capacity (Vc):</span>
+            <span class="result-value">${Vc.toFixed(1)} kN</span>
+            <small>(= 0.17√f'c × bw × d)</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Design Concrete Shear (φVc):</span>
+            <span class="result-value">${phiVc.toFixed(1)} kN</span>
+            <small>(= 0.75 × ${Vc.toFixed(1)})</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Applied Factored Shear (Vu):</span>
+            <span class="result-value">${Vu.toFixed(1)} kN</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Required Steel Shear (Vs):</span>
+            <span class="result-value">${Vs_required.toFixed(1)} kN</span>
+            <small>(= max(0, Vu - φVc))</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Maximum Vs Allowed:</span>
+            <span class="result-value">${VsMax.toFixed(1)} kN</span>
+            <small>(= 0.66√f'c × bw × d)</small>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Maximum Design Shear (φVn,max):</span>
+            <span class="result-value">${phiVnMax.toFixed(1)} kN</span>
+            <small>(= φ(Vc + Vs,max))</small>
+          </div>
+          
+          <!-- Shear Reinforcement Requirements -->
+          <div class="ui ${shearReinforcementRequired ? 'orange' : 'green'} message">
+            <div class="result-item">
+              <span class="result-label">Shear Reinforcement Required:</span>
+              <span class="result-value">${shearReinforcementRequired ? 'Yes' : 'No'}</span>
+              <small>${shearReinforcementRequired ? `(Vu = ${Vu.toFixed(1)} > 0.5φVc = ${(0.5*phiVc).toFixed(1)})` : `(Vu = ${Vu.toFixed(1)} ≤ 0.5φVc = ${(0.5*phiVc).toFixed(1)})`}</small>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Minimum Shear Reinforcement:</span>
+              <span class="result-value">${minShearReinforcement ? 'Required' : 'Not Required'}</span>
+            </div>
+          </div>
+
+          <!-- Stirrup Design Details -->
+          <div class="ui segment">
+            <h6><i class="wrench icon"></i>Stirrup Design Details</h6>
+            <div class="result-item">
+              <span class="result-label">Stirrup Configuration:</span>
+              <span class="result-value">${stirrupDia}mm φ two-legged stirrups</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Stirrup Steel Grade (fyv):</span>
+              <span class="result-value">${fyv} MPa</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Stirrup Area (Av):</span>
+              <span class="result-value">${stirrupArea.toFixed(0)} mm²</span>
+              <small>(= 2 × π × (${stirrupDia}/2)²)</small>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Required Spacing (by shear):</span>
+              <span class="result-value">${requiredStirrupSpacing > 999999 ? '∞ (No requirement)' : requiredStirrupSpacing.toFixed(0) + ' mm'}</span>
+              ${Vs_required > 0 ? `<small>(= Av × fyv × d / Vs = ${stirrupArea.toFixed(0)} × ${fyv} × ${adjustedD.toFixed(0)} / ${(Vs_required*1000).toFixed(0)})</small>` : ''}
+            </div>
+            <div class="result-item">
+              <span class="result-label">Design Spacing:</span>
+              <span class="result-value">${designStirrupSpacing.toFixed(0)} mm</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Spacing Check:</span>
+              <span class="result-value">${stirrupSpacingCheck}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Governing Limit:</span>
+              <span class="result-value">${spacingLimitReason}</span>
+            </div>
+            
+            ${Vs_required > 0.33 * Math.sqrt(fc) * width * adjustedD / 1000 ? `
+            <div class="ui yellow message">
+              <i class="warning icon"></i>
+              <strong>High Shear Condition:</strong> Vs > 0.33√f'c·bw·d
+              <br>Maximum spacing limited to min(d/4, 300mm) = ${Math.min(adjustedD/4, 300).toFixed(0)} mm
+            </div>
+            ` : ''}
+          </div>
+          
+          ${!shearReinforcementRequired && !minShearReinforcement ? `
+          <div class="ui blue message">
+            <i class="info circle icon"></i>
+            <strong>Note:</strong> While shear reinforcement is not required by calculation, NSCP 2015 may still require minimum stirrups in certain beam configurations. Check Section 409.6.1 for specific requirements based on member size and loading conditions.
+          </div>
+          ` : ''}
+        </div>
+
+        <div class="ui segment">
+          <h5>Design Summary & Recommendations</h5>
+          <div class="ui list">
+            <div class="item">
+              <i class="check circle outline icon"></i>
+              <div class="content">
+                <div class="header">Bottom Reinforcement</div>
+                <div class="description">${numBarsBottom}-${barDia}mm φ bars providing ${AsBottomProvided.toFixed(0)} mm² (Required: ${AsBottom.toFixed(0)} mm²)</div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="check circle outline icon"></i>
+              <div class="content">
+                <div class="header">Top Reinforcement</div>
+                <div class="description">${numBarsTop}-${barDia}mm φ bars providing ${AsTopProvided.toFixed(0)} mm² (Required: ${AsTop.toFixed(0)} mm²)</div>
+              </div>
+            </div>
+            ${numBarsCompression > 0 ? `
+            <div class="item">
+              <i class="check circle outline icon"></i>
+              <div class="content">
+                <div class="header">Compression Reinforcement</div>
+                <div class="description">${numBarsCompression}-${barDia}mm φ bars providing ${AsCompressionProvided.toFixed(0)} mm² (Required: ${AsCompression.toFixed(0)} mm²)</div>
+              </div>
+            </div>
+            ` : ''}
+            <div class="item">
+              <i class="check circle outline icon"></i>
+              <div class="content">
+                <div class="header">Shear Reinforcement</div>
+                <div class="description">${stirrupDia}mm φ stirrups @ ${designStirrupSpacing.toFixed(0)}mm c/c throughout beam length</div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="setting icon"></i>
+              <div class="content">
+                <div class="header">Concrete Cover</div>
+                <div class="description">${cover}mm clear cover to stirrups (${cover + stirrupDia}mm to main bars)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ui segment">
+          <h5>NSCP 2015 Code Compliance Verification</h5>
+          <div class="ui list">
+            <div class="item">
+              <i class="${codeCompliance.minSteelRatio.status === 'PASS' ? 'check green' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Minimum Steel Ratio Check</div>
+                <div class="description">
+                  Required: ρ ≥ ${codeCompliance.minSteelRatio.limit}% | Provided: ${codeCompliance.minSteelRatio.value}%
+                  <span class="ui ${codeCompliance.minSteelRatio.status === 'PASS' ? 'green' : 'red'} label">${codeCompliance.minSteelRatio.status}</span>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="${codeCompliance.maxSteelRatio.status === 'PASS' ? 'check green' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Maximum Steel Ratio Check</div>
+                <div class="description">
+                  Required: ρ ≤ ${codeCompliance.maxSteelRatio.limit}% | Provided: ${codeCompliance.maxSteelRatio.value}%
+                  <span class="ui ${codeCompliance.maxSteelRatio.status === 'PASS' ? 'green' : 'red'} label">${codeCompliance.maxSteelRatio.status}</span>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="${codeCompliance.bottomBarSpacing.status === 'PASS' ? 'check green' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Bottom Bar Spacing Check</div>
+                <div class="description">
+                  Bar arrangement and spacing compliance
+                  <span class="ui ${codeCompliance.bottomBarSpacing.status === 'PASS' ? 'green' : 'red'} label">${codeCompliance.bottomBarSpacing.status}</span>
+                  ${codeCompliance.bottomBarSpacing.status !== 'PASS' ? `<br><small>Recommendation: ${codeCompliance.bottomBarSpacing.recommendation}</small>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="${codeCompliance.topBarSpacing.status === 'PASS' ? 'check green' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Top Bar Spacing Check</div>
+                <div class="description">
+                  Bar arrangement and spacing compliance
+                  <span class="ui ${codeCompliance.topBarSpacing.status === 'PASS' ? 'green' : 'red'} label">${codeCompliance.topBarSpacing.status}</span>
+                  ${codeCompliance.topBarSpacing.status !== 'PASS' ? `<br><small>Recommendation: ${codeCompliance.topBarSpacing.recommendation}</small>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="${codeCompliance.shearCapacity.status === 'PASS' ? 'check green' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Shear Capacity Check</div>
+                <div class="description">
+                  ${codeCompliance.shearCapacity.message}
+                  <span class="ui ${codeCompliance.shearCapacity.status === 'PASS' ? 'green' : 'red'} label">${codeCompliance.shearCapacity.status}</span>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <i class="${codeCompliance.sectionBehavior.status === 'OPTIMAL' ? 'check green' : codeCompliance.sectionBehavior.status === 'ACCEPTABLE' ? 'warning yellow' : 'times red'} icon"></i>
+              <div class="content">
+                <div class="header">Section Behavior Analysis</div>
+                <div class="description">
+                  ${codeCompliance.sectionBehavior.behavior} (φ = ${codeCompliance.sectionBehavior.phi.toFixed(3)})
+                  <span class="ui ${codeCompliance.sectionBehavior.status === 'OPTIMAL' ? 'green' : codeCompliance.sectionBehavior.status === 'ACCEPTABLE' ? 'yellow' : 'red'} label">${codeCompliance.sectionBehavior.status}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          ${Object.values(codeCompliance).some(check => check.status === 'FAIL') ? `
+          <div class="ui red message">
+            <i class="warning sign icon"></i>
+            <div class="header">Design Issues Detected</div>
+            <p>Some code compliance checks have failed. Please review the recommendations above and consider modifying the beam dimensions, reinforcement layout, or material properties.</p>
+          </div>
+          ` : `
+          <div class="ui green message">
+            <i class="check circle icon"></i>
+            <div class="header">All Code Compliance Checks Passed</div>
+            <p>The beam design satisfies all NSCP 2015 requirements for flexural and shear design.</p>
+          </div>
+          `}
+        </div>
+      
+        <div class="ui divider"></div>
+        <div class="ui segment" style="text-align: center; padding: 20px;">
+          <div class="ui buttons">
+
+            <button class="ui primary button" onclick="downloadCalculationReport()">
+              <i class="download icon"></i>
+              Download Complete Report
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }, 1500);
+}
+
+
+// Enhanced PDF Report Download Function for NSCP 2015 Beam Design
+function downloadCalculationReport() {
+  // Check if calculation data exists
+  if (!window.calculationData) {
+    alert('No calculation data available. Please perform calculations first.');
+    return;
+  }
+
+  // Import jsPDF (ensure it's loaded in your HTML)
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF) {
+    alert('PDF library not loaded. Please ensure jsPDF is included in your project.');
+    return;
+  }
+
+  const doc = new jsPDF();
+  const data = window.calculationData;
+  const inputs = data.inputs;
+  const calc = data.calculations;
+  
+  let yPos = 20;
+  const pageHeight = doc.internal.pageSize.height;
+  const pageWidth = doc.internal.pageSize.width;
+  const margin = 20;
+  const rightMargin = pageWidth - margin;
+  const lineHeight = 6;
+  const sectionSpacing = 8;
+  
+  // Color scheme for professional presentation
+  const colors = {
+    primary: '#1f4e79',
+    secondary: '#4f81bd',
+    accent: '#8db4e2',
+    success: '#70ad47',
+    warning: '#ffc000',
+    danger: '#c5504b',
+    text: '#333333',
+    lightGray: '#f2f2f2',
+    mediumGray: '#cccccc'
+  };
+
+  // Helper function to add new page if needed
+  function checkPageBreak(requiredSpace = 20) {
+    if (yPos + requiredSpace > pageHeight - margin) {
+      doc.addPage();
+      yPos = 20;
+      return true;
+    }
+    return false;
+  }
+
+  // Helper function to add section header with styling
+  function addSectionHeader(title, color = colors.primary) {
+    checkPageBreak(20);
+    
+    // Add background rectangle
+    doc.setFillColor(color);
+    doc.rect(margin, yPos - 3, rightMargin - margin, 12, 'F');
+    
+    // Add section title
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(title, margin + 3, yPos + 5);
+    
+    yPos += 15;
+    doc.setTextColor(colors.text);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+  }
+
+  // Helper function to add subsection header
+  function addSubsectionHeader(title) {
+    checkPageBreak(10);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(colors.secondary);
+    doc.text(title, margin, yPos);
+    yPos += 8;
+    doc.setTextColor(colors.text);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+  }
+
+  // Helper function to add key-value pair with enhanced formatting
+  function addKeyValue(key, value, unit = '', indent = 0, status = null) {
+    checkPageBreak();
+    
+    // Add status indicator if provided
+    if (status) {
+      const statusColor = status === 'PASS' || status === 'ACCEPTABLE' || status === 'OPTIMAL' ? 
+        colors.success : status === 'FAIL' || status === 'CRITICAL' ? colors.danger : colors.warning;
+      
+      doc.setFillColor(statusColor);
+      doc.circle(margin + indent + 3, yPos - 1, 2, 'F');
+    }
+    
+    const keyX = margin + indent + (status ? 8 : 0);
+    const valueX = margin + 100 + indent;
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`${key}:`, keyX, yPos);
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(`${value} ${unit}`, valueX, yPos);
+    
+    doc.setFont(undefined, 'normal');
+    yPos += lineHeight;
+  }
+
+  // Helper function to add a note or comment
+  function addNote(text, type = 'info') {
+    checkPageBreak(15);
+    
+    const noteColor = type === 'warning' ? colors.warning : 
+                     type === 'error' ? colors.danger : colors.accent;
+    
+    doc.setFillColor(noteColor);
+    doc.rect(margin, yPos - 2, rightMargin - margin, 10, 'F');
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Note: ${text}`, margin + 3, yPos + 4);
+    
+    yPos += 12;
+    doc.setTextColor(colors.text);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+  }
+
+  // Helper function to draw beam cross-section
+  function drawBeamCrossSection(x, y, width, height, title = '') {
+    const beamWidth = 60;
+    const beamHeight = 80;
+    const scale = Math.min(width / beamWidth, height / beamHeight) * 0.8;
+    const scaledWidth = beamWidth * scale;
+    const scaledHeight = beamHeight * scale;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const beamX = centerX - scaledWidth / 2;
+    const beamY = centerY - scaledHeight / 2;
+    
+    // Draw concrete section
+    doc.setFillColor(colors.lightGray);
+    doc.setDrawColor(colors.text);
+    doc.rect(beamX, beamY, scaledWidth, scaledHeight, 'FD');
+    
+    // Draw reinforcement bars
+    const barRadius = 2 * scale;
+    const cover = 5 * scale;
+    
+    // Top bars
+    const numTopBars = Math.min(calc.numBarsTop || 2, 4);
+    const topBarSpacing = (scaledWidth - 2 * cover) / (numTopBars + 1);
+    for (let i = 1; i <= numTopBars; i++) {
+      doc.setFillColor('#8B4513');
+      doc.circle(beamX + i * topBarSpacing + cover, beamY + cover, barRadius, 'F');
+    }
+    
+    // Bottom bars
+    const numBottomBars = Math.min(calc.numBarsBottom || 3, 4);
+    const bottomBarSpacing = (scaledWidth - 2 * cover) / (numBottomBars + 1);
+    for (let i = 1; i <= numBottomBars; i++) {
+      doc.setFillColor('#8B4513');
+      doc.circle(beamX + i * bottomBarSpacing + cover, beamY + scaledHeight - cover, barRadius, 'F');
+    }
+    
+    // Draw stirrups
+    doc.setDrawColor('#FF6347');
+    doc.setLineWidth(0.5);
+    doc.rect(beamX + cover/2, beamY + cover/2, scaledWidth - cover, scaledHeight - cover);
+    
+    // Add dimensions
+    doc.setFontSize(8);
+    doc.setTextColor(colors.text);
+    doc.text(`${inputs.width}mm`, centerX - 10, beamY + scaledHeight + 8);
+    doc.text(`${inputs.height}mm`, beamX - 15, centerY + 2);
+    
+    // Add title if provided
+    if (title) {
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, centerX - doc.getTextWidth(title)/2, beamY - 5);
+      doc.setFont(undefined, 'normal');
+    }
+    
+    doc.setLineWidth(0.2);
+    doc.setDrawColor(colors.text);
+  }
+
+  // Helper function to draw moment diagram
+  function drawMomentDiagram(x, y, width, height) {
+    const maxMoment = Math.max(Math.abs(inputs.moment), Math.abs(inputs.momentTop));
+    const scale = height * 0.8 / maxMoment;
+    const centerY = y + height / 2;
+    
+    // Draw baseline
+    doc.setDrawColor(colors.text);
+    doc.line(x, centerY, x + width, centerY);
+    
+    // Draw moment curve (simplified parabolic)
+    doc.setDrawColor(colors.secondary);
+    doc.setLineWidth(2);
+    
+    const points = [];
+    for (let i = 0; i <= width; i += 5) {
+      const ratio = i / width;
+      const momentAtPoint = inputs.moment * Math.sin(Math.PI * ratio);
+      const yPoint = centerY - momentAtPoint * scale;
+      points.push([x + i, yPoint]);
+    }
+    
+    // Draw the curve
+    for (let i = 1; i < points.length; i++) {
+      doc.line(points[i-1][0], points[i-1][1], points[i][0], points[i][1]);
+    }
+    
+    // Add labels
+    doc.setFontSize(8);
+    doc.text(`+${inputs.moment} kN⋅m`, x + width/2 - 15, centerY + 15);
+    if (inputs.momentTop > 0) {
+      doc.text(`-${inputs.momentTop} kN⋅m`, x + 5, centerY - 10);
+    }
+    
+    doc.setLineWidth(0.2);
+  }
+
+  // Helper function to draw shear diagram
+  function drawShearDiagram(x, y, width, height) {
+    const centerY = y + height / 2;
+    const shearScale = height * 0.4 / inputs.shear;
+    
+    // Draw baseline
+    doc.setDrawColor(colors.text);
+    doc.line(x, centerY, x + width, centerY);
+    
+    // Draw shear diagram (rectangular for simplified beam)
+    doc.setDrawColor(colors.danger);
+    doc.setLineWidth(2);
+    
+    const shearHeight = inputs.shear * shearScale;
+    doc.line(x, centerY, x, centerY - shearHeight);
+    doc.line(x, centerY - shearHeight, x + width/2, centerY - shearHeight);
+    doc.line(x + width/2, centerY - shearHeight, x + width/2, centerY + shearHeight);
+    doc.line(x + width/2, centerY + shearHeight, x + width, centerY + shearHeight);
+    doc.line(x + width, centerY + shearHeight, x + width, centerY);
+    
+    // Add labels
+    doc.setFontSize(8);
+    doc.text(`${inputs.shear} kN`, x + 5, centerY - shearHeight/2);
+    doc.text(`${inputs.shear} kN`, x + width - 20, centerY + shearHeight/2);
+    
+    doc.setLineWidth(0.2);
+  }
+
+  // Header with logo space and enhanced styling
+  doc.setFillColor(colors.primary);
+  doc.rect(0, 0, pageWidth, 25, 'F');
+  
+  doc.setFontSize(18);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text('NSCP 2015 REINFORCED CONCRETE BEAM DESIGN REPORT', margin, 15);
+  
+  // Project information bar
+  yPos = 35;
+  doc.setFillColor(colors.lightGray);
+  doc.rect(margin, yPos - 5, rightMargin - margin, 15, 'F');
+  
+  doc.setFontSize(10);
+  doc.setTextColor(colors.text);
+  doc.setFont(undefined, 'bold');
+  doc.text('PROJECT INFORMATION', margin + 3, yPos + 2);
+  
+  doc.setFont(undefined, 'normal');
+  doc.text(`Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 
+    rightMargin - 80, yPos + 2);
+  doc.text(`Engineer: ________________`, margin + 3, yPos + 8);
+  doc.text(`Project: ________________`, margin + 80, yPos + 8);
+  
+  yPos += 20;
+
+  // 1. DESIGN INPUTS SECTION
+  addSectionHeader('1. DESIGN INPUTS & LOADING');
+  
+  addSubsectionHeader('Beam Geometry');
+  addKeyValue('Beam Width (b)', inputs.width, 'mm');
+  addKeyValue('Beam Height (h)', inputs.height, 'mm');
+  addKeyValue('Effective Depth (d)', calc.d.toFixed(1), 'mm');
+  addKeyValue('Beam Length (L)', inputs.length, 'm');
+  addKeyValue('Concrete Cover', inputs.cover, 'mm');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Material Properties');
+  addKeyValue('Concrete Compressive Strength (f\'c)', inputs.fc, 'MPa');
+  addKeyValue('Steel Yield Strength (fy)', inputs.fy, 'MPa');
+  addKeyValue('Steel Modulus of Elasticity (Es)', '200,000', 'MPa');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Applied Loads');
+  addKeyValue('Bottom Moment (Mu)', inputs.moment, 'kN⋅m');
+  addKeyValue('Top Moment (Mu\')', inputs.momentTop, 'kN⋅m');
+  addKeyValue('Shear Force (Vu)', inputs.shear, 'kN');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Reinforcement Details');
+  addKeyValue('Main Bar Diameter', inputs.barDia, 'mm');
+  addKeyValue('Stirrup Diameter', inputs.stirrupDia, 'mm');
+  addKeyValue('Main Bar Area', (Math.PI * Math.pow(inputs.barDia/2, 2)).toFixed(0), 'mm²');
+  addKeyValue('Stirrup Area (two-legged)', (2 * Math.PI * Math.pow(inputs.stirrupDia/2, 2)).toFixed(0), 'mm²');
+
+  // 2. CROSS-SECTION & DIAGRAMS
+  checkPageBreak(100);
+  addSectionHeader('2. BEAM CROSS-SECTION & LOADING DIAGRAMS');
+  
+  const diagramY = yPos;
+  const diagramHeight = 60;
+  const diagramWidth = (rightMargin - margin - 20) / 3;
+  
+  // Cross-section
+  drawBeamCrossSection(margin, diagramY, diagramWidth, diagramHeight, 'Cross-Section');
+  
+  // Moment diagram
+  drawMomentDiagram(margin + diagramWidth + 10, diagramY + 10, diagramWidth, diagramHeight - 20);
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'bold');
+  doc.text('Moment Diagram', margin + diagramWidth + 10 + diagramWidth/2 - 20, diagramY + 5);
+  doc.setFont(undefined, 'normal');
+  
+  // Shear diagram
+  drawShearDiagram(margin + 2 * (diagramWidth + 10), diagramY + 10, diagramWidth, diagramHeight - 20);
+  doc.text('Shear Diagram', margin + 2 * (diagramWidth + 10) + diagramWidth/2 - 18, diagramY + 5);
+  
+  yPos = diagramY + diagramHeight + 15;
+
+  // 3. MATERIAL PROPERTIES & FACTORS
+  addSectionHeader('3. MATERIAL PROPERTIES & DESIGN FACTORS');
+  addKeyValue('Beta Factor (β₁)', calc.beta.toFixed(3));
+  addKeyValue('Balanced Steel Ratio (ρb)', (calc.rhoBal * 100).toFixed(4), '%');
+  addKeyValue('Maximum Steel Ratio (ρmax)', (calc.rhoMax * 100).toFixed(4), '%');
+  addKeyValue('Minimum Steel Ratio (ρmin)', (calc.rhoMin * 100).toFixed(4), '%');
+  addKeyValue('Flexural Strength Reduction Factor (φ)', calc.actualPhi.toFixed(3));
+  addKeyValue('Shear Strength Reduction Factor (φ)', '0.75');
+  addKeyValue('Section Classification', calc.sectionBehavior);
+  
+  const tensionControlled = calc.sectionBehavior === 'Tension-controlled';
+  addNote(`This section is ${calc.sectionBehavior.toLowerCase()}, providing ${tensionControlled ? 'adequate' : 'limited'} ductility.`, 
+    tensionControlled ? 'info' : 'warning');
+
+  // 4. STEEL RATIO ANALYSIS
+  addSectionHeader('4. STEEL RATIO ANALYSIS & VERIFICATION');
+  
+  addKeyValue('Required Steel Ratio (ρ)', (calc.rho * 100).toFixed(4), '%');
+  addKeyValue('ρmin ≤ ρ ≤ ρmax Check', 
+    (calc.rho >= calc.rhoMin && calc.rho <= calc.rhoMax) ? 'SATISFIED' : 'NOT SATISFIED',
+    '', 0, (calc.rho >= calc.rhoMin && calc.rho <= calc.rhoMax) ? 'PASS' : 'FAIL'
+  );
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Steel Ratio Limits Analysis');
+  addKeyValue('Minimum Ratio Check', calc.rho >= calc.rhoMin ? 'PASS' : 'FAIL', 
+    `(${(calc.rho * 100).toFixed(4)}% ≥ ${(calc.rhoMin * 100).toFixed(4)}%)`, 2, 
+    calc.rho >= calc.rhoMin ? 'PASS' : 'FAIL');
+  addKeyValue('Maximum Ratio Check', calc.rho <= calc.rhoMax ? 'PASS' : 'FAIL', 
+    `(${(calc.rho * 100).toFixed(4)}% ≤ ${(calc.rhoMax * 100).toFixed(4)}%)`, 2, 
+    calc.rho <= calc.rhoMax ? 'PASS' : 'FAIL');
+
+  // 5. FLEXURAL DESIGN RESULTS
+  addSectionHeader('5. FLEXURAL DESIGN RESULTS');
+  
+  addKeyValue('Design Classification', calc.beamType);
+  addKeyValue('Neutral Axis Depth (c)', calc.c.toFixed(1), 'mm');
+  addKeyValue('Compression Block Depth (a)', calc.a.toFixed(1), 'mm');
+  addKeyValue('Distance to Extreme Tension (dt)', calc.dt ? calc.dt.toFixed(1) : calc.d.toFixed(1), 'mm');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Steel Requirements');
+  addKeyValue('Required Bottom Steel (As)', calc.AsBottom.toFixed(0), 'mm²');
+  addKeyValue('Required Top Steel (As\')', calc.AsTop.toFixed(0), 'mm²');
+  if (calc.AsCompression && calc.AsCompression > 0) {
+    addKeyValue('Required Compression Steel', calc.AsCompression.toFixed(0), 'mm²');
+  }
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Provided Reinforcement');
+  addKeyValue('Bottom Bars Configuration', `${calc.numBarsBottom}-${inputs.barDia}mm φ`);
+  addKeyValue('Bottom Area Provided (As,prov)', calc.AsBottomProvided.toFixed(0), 'mm²');
+  addKeyValue('Bottom Steel Adequacy', 
+    calc.AsBottomProvided >= calc.AsBottom ? 'ADEQUATE' : 'INADEQUATE',
+    `(${((calc.AsBottomProvided / calc.AsBottom - 1) * 100).toFixed(1)}%)`, 2,
+    calc.AsBottomProvided >= calc.AsBottom ? 'PASS' : 'FAIL');
+  
+  addKeyValue('Top Bars Configuration', `${calc.numBarsTop}-${inputs.barDia}mm φ`);
+  addKeyValue('Top Area Provided (As\',prov)', calc.AsTopProvided.toFixed(0), 'mm²');
+  addKeyValue('Top Steel Adequacy', 
+    calc.AsTopProvided >= calc.AsTop ? 'ADEQUATE' : 'INADEQUATE',
+    `(${((calc.AsTopProvided / calc.AsTop - 1) * 100).toFixed(1)}%)`, 2,
+    calc.AsTopProvided >= calc.AsTop ? 'PASS' : 'FAIL');
+  
+  if (calc.numBarsCompression && calc.numBarsCompression > 0) {
+    addKeyValue('Compression Bars', `${calc.numBarsCompression}-${inputs.barDia}mm φ`);
+    addKeyValue('Compression Area Provided', calc.AsCompressionProvided.toFixed(0), 'mm²');
+  }
+
+  // 6. BAR LAYOUT ANALYSIS
+  addSectionHeader('6. REINFORCEMENT LAYOUT ANALYSIS');
+  
+  addSubsectionHeader('Bottom Reinforcement Layout');
+  const bottomLayout = calc.bottomBarValidation;
+  addKeyValue('Layout Feasibility', bottomLayout.isValid ? 'FEASIBLE' : 'LAYOUT ISSUE', '', 2,
+    bottomLayout.isValid ? 'PASS' : 'FAIL');
+  addKeyValue('Recommendation', bottomLayout.recommendation, '', 2);
+  
+  if (bottomLayout.isValid && bottomLayout.layout) {
+    addKeyValue('Layer Configuration', 
+      `${bottomLayout.layout.layers} layer(s), ${bottomLayout.layout.barsPerLayer} bars per layer`, '', 4);
+    addKeyValue('Clear Bar Spacing', bottomLayout.layout.spacing.toFixed(1), 'mm', 4);
+    
+    const minSpacing = Math.max(25, inputs.barDia, 25); // NSCP minimum requirements
+    addKeyValue('Spacing Adequacy', 
+      bottomLayout.layout.spacing >= minSpacing ? 'ADEQUATE' : 'INADEQUATE',
+      `(min: ${minSpacing}mm)`, 4, 
+      bottomLayout.layout.spacing >= minSpacing ? 'PASS' : 'FAIL');
+  }
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Top Reinforcement Layout');
+  const topLayout = calc.topBarValidation;
+  addKeyValue('Layout Feasibility', topLayout.isValid ? 'FEASIBLE' : 'LAYOUT ISSUE', '', 2,
+    topLayout.isValid ? 'PASS' : 'FAIL');
+  addKeyValue('Recommendation', topLayout.recommendation, '', 2);
+  
+  if (topLayout.isValid && topLayout.layout) {
+    addKeyValue('Layer Configuration', 
+      `${topLayout.layout.layers} layer(s), ${topLayout.layout.barsPerLayer} bars per layer`, '', 4);
+    addKeyValue('Clear Bar Spacing', topLayout.layout.spacing.toFixed(1), 'mm', 4);
+    
+    const minSpacing = Math.max(25, inputs.barDia, 25);
+    addKeyValue('Spacing Adequacy', 
+      topLayout.layout.spacing >= minSpacing ? 'ADEQUATE' : 'INADEQUATE',
+      `(min: ${minSpacing}mm)`, 4, 
+      topLayout.layout.spacing >= minSpacing ? 'PASS' : 'FAIL');
+  }
+
+  // 7. SHEAR DESIGN ANALYSIS
+  addSectionHeader('7. SHEAR DESIGN ANALYSIS');
+  
+  addSubsectionHeader('Concrete Shear Capacity');
+  addKeyValue('Concrete Shear Strength (Vc)', calc.Vc.toFixed(1), 'kN');
+  addKeyValue('Design Concrete Shear (φVc)', calc.phiVc.toFixed(1), 'kN');
+  addKeyValue('Applied Shear Force (Vu)', inputs.shear, 'kN');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Steel Shear Requirements');
+  addKeyValue('Required Steel Shear (Vs)', calc.Vs_required.toFixed(1), 'kN');
+  addKeyValue('Maximum Allowable Vs', calc.VsMax.toFixed(1), 'kN');
+  addKeyValue('Shear Reinforcement Required', calc.shearReinforcementRequired ? 'YES' : 'NO', '',
+    0, calc.shearReinforcementRequired ? 'PASS' : 'PASS');
+  
+  if (calc.Vs_required > calc.VsMax) {
+    addNote('Required shear reinforcement exceeds maximum allowable. Consider increasing section size.', 'error');
+  }
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Stirrup Design');
+  addKeyValue('Stirrup Configuration', `${inputs.stirrupDia}mm φ two-legged`);
+  addKeyValue('Stirrup Area (Av)', calc.stirrupArea.toFixed(0), 'mm²');
+  addKeyValue('Required Spacing (calculated)', 
+    calc.requiredStirrupSpacing > 999999 ? '∞ (No requirement)' : calc.requiredStirrupSpacing.toFixed(0), 'mm');
+  addKeyValue('Design Spacing (provided)', calc.designStirrupSpacing.toFixed(0), 'mm');
+  addKeyValue('Spacing Control', calc.stirrupSpacingCheck, '', 2);
+  addKeyValue('Shear Capacity Verification', calc.shearCapacityCheck, '', 2,
+    calc.shearCapacityCheck.includes('PASS') ? 'PASS' : 'FAIL');
+
+  // 8. STRAIN & COMPATIBILITY ANALYSIS
+  addSectionHeader('8. STRAIN & COMPATIBILITY ANALYSIS');
+  
+  addKeyValue('Steel Strain (εs)', (calc.es * 1000).toFixed(3), '× 10⁻³');
+  addKeyValue('Extreme Tension Strain (εt)', (calc.et * 1000).toFixed(3), '× 10⁻³');
+  addKeyValue('Yield Strain (εy)', (calc.ey * 1000).toFixed(3), '× 10⁻³');
+  addKeyValue('Steel Yielding Status', calc.steelYields ? 'YIELDS' : 'DOES NOT YIELD', '',
+    0, calc.steelYields ? 'PASS' : 'FAIL');
+  addKeyValue('c/dt Ratio', (calc.c/calc.dt).toFixed(3));
+  
+  // Strain compatibility check
+  const strainRatio = calc.c / (calc.dt || calc.d);
+  const strainStatus = strainRatio <= 0.375 ? 'Tension-controlled' : 
+                      strainRatio <= 0.6 ? 'Transition zone' : 'Compression-controlled';
+  addKeyValue('Section Behavior (strain-based)', strainStatus, '', 2);
+  
+  if (strainRatio > 0.375) {
+    addNote('Section is not tension-controlled. Consider reducing reinforcement or increasing section size for better ductility.', 'warning');
+  }
+
+  // 9. CODE COMPLIANCE VERIFICATION
+  addSectionHeader('9. NSCP 2015 CODE COMPLIANCE VERIFICATION');
+  
+  const compliance = calc.codeCompliance;
+  
+  // Create compliance summary table
+  yPos += 5;
+  const tableHeaders = ['Code Requirement', 'Status', 'Remarks'];
+  const cellWidth = (rightMargin - margin) / 3;
+  const headerY = yPos;
+  
+  // Table header
+  doc.setFillColor(colors.secondary);
+  doc.rect(margin, headerY, rightMargin - margin, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont(undefined, 'bold');
+  doc.text('Code Requirement', margin + 2, headerY + 5);
+  doc.text('Status', margin + cellWidth + 2, headerY + 5);
+  doc.text('Remarks', margin + 2 * cellWidth + 2, headerY + 5);
+  
+  yPos += 10;
+  doc.setTextColor(colors.text);
+  doc.setFont(undefined, 'normal');
+  
+  // Table rows
+  const complianceItems = [
+    {
+      requirement: 'Minimum Steel Ratio',
+      status: compliance.minSteelRatio?.status || 'N/A',
+      remarks: `ρ ≥ ${(calc.rhoMin * 100).toFixed(3)}%`
+    },
+    {
+      requirement: 'Maximum Steel Ratio', 
+      status: compliance.maxSteelRatio?.status || 'N/A',
+      remarks: `ρ ≤ ${(calc.rhoMax * 100).toFixed(3)}%`
+    },
+    {
+      requirement: 'Bottom Bar Spacing',
+      status: compliance.bottomBarSpacing?.status || 'N/A', 
+      remarks: 'NSCP Sec. 425.2'
+    },
+    {
+      requirement: 'Top Bar Spacing',
+      status: compliance.topBarSpacing?.status || 'N/A',
+      remarks: 'NSCP Sec. 425.2'
+    },
+    {
+      requirement: 'Shear Capacity',
+      status: compliance.shearCapacity?.status || 'N/A',
+      remarks: 'NSCP Sec. 422'
+    },
+    {
+      requirement: 'Section Behavior',
+      status: compliance.sectionBehavior?.status || 'N/A',
+      remarks: calc.sectionBehavior
+    }
+  ];
+  
+complianceItems.forEach((item, index) => {
+    checkPageBreak(8);
+    
+    // Alternate row coloring
+    if (index % 2 === 0) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, yPos - 2, rightMargin - margin, 7, 'F');
+    }
+    
+    // Status indicator
+    const statusColor = item.status === 'PASS' || item.status === 'ACCEPTABLE' || item.status === 'OPTIMAL' ? 
+      colors.success : item.status === 'FAIL' || item.status === 'CRITICAL' ? colors.danger : colors.warning;
+    
+    doc.setFillColor(statusColor);
+    doc.circle(margin + cellWidth - 15, yPos + 1, 2, 'F');
+    
+    // Row content
+    doc.setTextColor(colors.text);
+    doc.text(item.requirement, margin + 2, yPos + 3);
+    doc.setFont(undefined, 'bold');
+    doc.text(item.status, margin + cellWidth + 2, yPos + 3);
+    doc.setFont(undefined, 'normal');
+    doc.text(item.remarks, margin + 2 * cellWidth + 2, yPos + 3);
+    
+    yPos += 7;
+  });
+
+  yPos += 5;
+  
+  // Overall compliance summary
+  const overallCompliance = complianceItems.every(item => 
+    ['PASS', 'ACCEPTABLE', 'OPTIMAL'].includes(item.status)
+  );
+  
+  addNote(
+    `Overall Design Status: ${overallCompliance ? 'COMPLIANT' : 'NON-COMPLIANT'} with NSCP 2015 requirements`,
+    overallCompliance ? 'info' : 'error'
+  );
+
+  // 10. DESIGN SUMMARY & RECOMMENDATIONS
+  addSectionHeader('10. DESIGN SUMMARY & RECOMMENDATIONS');
+  
+  addSubsectionHeader('Final Design Summary');
+  addKeyValue('Beam Dimensions', `${inputs.width} × ${inputs.height} mm`);
+  addKeyValue('Bottom Reinforcement', `${calc.numBarsBottom}-${inputs.barDia}mm φ`);
+  addKeyValue('Top Reinforcement', `${calc.numBarsTop}-${inputs.barDia}mm φ`);
+  addKeyValue('Stirrups', `${inputs.stirrupDia}mm φ @ ${calc.designStirrupSpacing}mm c/c`);
+  addKeyValue('Design Status', overallCompliance ? 'ADEQUATE' : 'REQUIRES REVISION', '',
+    0, overallCompliance ? 'PASS' : 'FAIL');
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Critical Design Ratios');
+  addKeyValue('Steel Ratio Utilization', `${((calc.rho / calc.rhoMax) * 100).toFixed(1)}% of maximum`);
+  addKeyValue('Moment Capacity Utilization', `${((inputs.moment / calc.designMomentCapacity) * 100).toFixed(1)}%`);
+  addKeyValue('Shear Capacity Utilization', `${((inputs.shear / calc.totalShearCapacity) * 100).toFixed(1)}%`);
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Professional Recommendations');
+  
+  // Generate specific recommendations based on analysis
+  const recommendations = [];
+  
+  if (!overallCompliance) {
+    recommendations.push('Review and modify design to ensure full NSCP 2015 compliance');
+  }
+  
+  if (calc.rho / calc.rhoMax > 0.8) {
+    recommendations.push('Consider increasing beam dimensions to reduce steel congestion');
+  }
+  
+  if (calc.bottomBarValidation && !calc.bottomBarValidation.isValid) {
+    recommendations.push('Optimize bottom reinforcement layout for constructability');
+  }
+  
+  if (calc.topBarValidation && !calc.topBarValidation.isValid) {
+    recommendations.push('Optimize top reinforcement layout for constructability');
+  }
+  
+  if (calc.designStirrupSpacing < 100) {
+    recommendations.push('Consider larger stirrup diameter to increase spacing');
+  }
+  
+  if (calc.sectionBehavior !== 'Tension-controlled') {
+    recommendations.push('Modify design to ensure tension-controlled behavior for ductility');
+  }
+  
+  if (recommendations.length === 0) {
+    recommendations.push('Design satisfies all NSCP 2015 requirements');
+    recommendations.push('Proceed with construction documentation');
+  }
+  
+  recommendations.forEach((rec, index) => {
+    checkPageBreak(6);
+    doc.text(`${index + 1}. ${rec}`, margin + 5, yPos);
+    yPos += 6;
+  });
+
+  // 11. REFERENCES & ANNOTATIONS
+  addSectionHeader('11. REFERENCES & DESIGN NOTES');
+  
+  addSubsectionHeader('Code References');
+  const references = [
+    'NSCP 2015 - National Structural Code of the Philippines 2015',
+    'Section 409 - Flexural and Axial Loads',
+    'Section 422 - Shear and Torsion',
+    'Section 425 - Reinforcement Details',
+    'Section 409.3 - Reinforcement Limits',
+    'Section 422.5 - Minimum Shear Reinforcement'
+  ];
+  
+  references.forEach(ref => {
+    checkPageBreak();
+    doc.text(`• ${ref}`, margin + 5, yPos);
+    yPos += 5;
+  });
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Design Assumptions');
+  const assumptions = [
+    'Normal weight concrete assumed',
+    'Grade 60 reinforcing steel (fy = 415 MPa)',
+    'Standard hook and development length requirements apply',
+    'No special seismic considerations unless specified',
+    'Construction loads and tolerances per NSCP standards'
+  ];
+  
+  assumptions.forEach(assumption => {
+    checkPageBreak();
+    doc.text(`• ${assumption}`, margin + 5, yPos);
+    yPos += 5;
+  });
+  
+  yPos += sectionSpacing;
+  addSubsectionHeader('Quality Control Notes');
+  addNote('Verify concrete strength before construction and ensure proper curing', 'warning');
+  addNote('Check reinforcement placement and concrete cover during construction', 'info');
+  addNote('This design is valid only for the specified loads and conditions', 'warning');
+
+  // Footer with professional seal space and disclaimers
+  const footerY = pageHeight - 40;
+  
+  // Add professional seal space on last page
+  doc.setDrawColor(colors.mediumGray);
+  doc.setLineWidth(0.5);
+  doc.rect(margin, footerY, 80, 30);
+  doc.setFontSize(8);
+  doc.setTextColor(colors.mediumGray);
+  doc.text('Professional Engineer Seal', margin + 5, footerY + 15);
+  doc.text('and Signature', margin + 5, footerY + 20);
+  
+  // Disclaimer
+  doc.setFontSize(8);
+  doc.setTextColor(colors.text);
+  const disclaimerText = 'This design is based on the specified loads and conditions. Any changes to loading, ' +
+    'materials, or geometry require re-analysis. Construction must comply with NSCP 2015 and local building codes.';
+  
+  const disclaimerLines = doc.splitTextToSize(disclaimerText, rightMargin - margin - 85);
+  disclaimerLines.forEach((line, index) => {
+    doc.text(line, margin + 85, footerY + 5 + (index * 4));
+  });
+  
+  // Page numbering (add to all pages)
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(colors.mediumGray);
+    doc.text(`Page ${i} of ${pageCount}`, rightMargin - 25, pageHeight - 10);
+    doc.text('NSCP 2015 Beam Design Report', margin, pageHeight - 10);
+  }
+
+  // Save the PDF
+  const fileName = `NSCP2015_Beam_Design_Report_${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}.pdf`;
+  doc.save(fileName);
+  
+  // Show completion message
+  alert(`Design report generated successfully!\nFile: ${fileName}\n\nThe report includes:\n• Complete design calculations\n• Code compliance verification\n• Professional recommendations\n• Construction details`);
+  
+  // Optional: Log summary to console for debugging
+  console.log('PDF Report Generated:', {
+    fileName: fileName,
+    pageCount: pageCount,
+    designStatus: overallCompliance ? 'COMPLIANT' : 'NON-COMPLIANT',
+    recommendations: recommendations.length
+  });
+}
+
+
+// Cross-section visualization class
+class ConcreteBeamSections {
+  constructor() {
+    this.leftCanvas = document.getElementById('leftSection');
+    this.middleCanvas = document.getElementById('middleSection');
+    this.rightCanvas = document.getElementById('rightSection');
+
+    if (!this.leftCanvas || !this.middleCanvas || !this.rightCanvas) {
+      console.warn('One or more section canvas elements not found');
+      return;
+    }
+
+    this.leftCtx = this.leftCanvas.getContext('2d');
+    this.middleCtx = this.middleCanvas.getContext('2d');
+    this.rightCtx = this.rightCanvas.getContext('2d');
+
+    this.setupCanvases();
+    this.draw();
+  }
+
+  setupCanvases() {
+    [this.leftCanvas, this.middleCanvas, this.rightCanvas].forEach(canvas => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+    });
+  }
+
+  drawConcreteSection(ctx, canvas) {
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw concrete section
+    ctx.fillStyle = '#c0c0c0';
+    ctx.strokeStyle = '#808080';
+    ctx.lineWidth = 2;
+
+    const sectionWidth = Math.min(120, width * 0.8);
+    const sectionHeight = Math.min(160, height * 0.8);
+    const x = centerX - sectionWidth / 2;
+    const y = centerY - sectionHeight / 2;
+
+    ctx.fillRect(x, y, sectionWidth, sectionHeight);
+    ctx.strokeRect(x, y, sectionWidth, sectionHeight);
+
+    // Add reinforcement bars
+    ctx.fillStyle = '#8B4513';
+    const radius = 4;
+    const barSpacing = sectionWidth / 4;
+    
+    // Top bars
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(x + barSpacing + i * barSpacing, y + 20, radius, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    
+    // Bottom bars
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(x + barSpacing + i * barSpacing, y + sectionHeight - 20, radius, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    
+    // Stirrups
+    ctx.strokeStyle = '#FF6347';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.strokeRect(x + 10, y + 10, sectionWidth - 20, sectionHeight - 20);
+  }
+
+  draw() {
+    this.drawConcreteSection(this.leftCtx, this.leftCanvas);
+    this.drawConcreteSection(this.middleCtx, this.middleCanvas);
+    this.drawConcreteSection(this.rightCtx, this.rightCanvas);
+  }
+}
+
+// Initialize sections when page loads
+window.addEventListener('load', () => {
+  // Small delay to ensure DOM is fully rendered
+  setTimeout(() => {
+    new ConcreteBeamSections();
+  }, 100);
+});
+
+// Reinitialize sections on window resize
+window.addEventListener('resize', () => {
+  setTimeout(() => {
+    new ConcreteBeamSections();
+  }, 100);
+});
+
+// Make sure updateVisualization is called when needed
+// This can be called from HTML form elements
+if (typeof updateVisualization === 'function') {
+  // Initial call if the function exists
+  setTimeout(updateVisualization, 500);
+}
+</script>
+</body>
+</html>
